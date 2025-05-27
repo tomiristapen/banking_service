@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "github.com/tomiristapen/banking_service/user_service/proto;userpb";
+
+service UserService {
+  rpc RegisterUser(RegisterRequest) returns (RegisterResponse);
+  rpc LoginUser(LoginRequest) returns (LoginResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc GetUserProfile(ProfileRequest) returns (ProfileResponse);
+
+  // ✅ Баланс функционалдары
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc DecreaseBalance(DecreaseBalanceRequest) returns (BalanceUpdateResponse);
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  string message = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  string message = 2;
+}
+
+message VerifyEmailRequest {
+  string user_id = 1;
+  string code = 2;
+}
+
+message VerifyEmailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ProfileRequest {
+    string token = 1;
+}
+
+message ProfileResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  bool is_verified = 4;
+  double balance = 5;
+}
+
+// ✅ Balance messages
+message GetBalanceRequest {
+  string user_id = 1;
+}
+
+message GetBalanceResponse {
+  double balance = 1;
+}
+
+message DecreaseBalanceRequest {
+  string user_id = 1;
+  double amount = 2;
+}
+
+message BalanceUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}

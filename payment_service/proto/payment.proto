@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "github.com/tomiristapen/banking_service/payment_service/proto;paymentpb";
+
+service PaymentService {
+  rpc ListAvailableServices (ListServicesRequest) returns (ListServicesResponse);
+  rpc PayForService (PaymentRequest) returns (PaymentResponse);
+  rpc GetPaymentStatus (PaymentStatusRequest) returns (PaymentStatusResponse);
+}
+
+message ListServicesRequest {}
+
+message ListServicesResponse {
+  repeated string services = 1;
+}
+
+message PaymentRequest {
+  string user_id = 1;
+  double amount = 2;
+  string service = 3;
+  string category = 4;
+}
+
+message PaymentResponse {
+  string payment_id = 1;
+  string status = 2; // success, failed, insufficient_funds
+  string message = 3;
+}
+
+message PaymentStatusRequest {
+  string payment_id = 1;
+}
+
+message PaymentStatusResponse {
+  string status = 1; // success, failed, pending
+}
