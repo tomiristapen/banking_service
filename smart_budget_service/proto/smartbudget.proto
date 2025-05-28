@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package smartbudget;
+
+option go_package = "github.com/tomiristapen/banking_service/smart_budget_service/proto;smartbudgetpb";
+
+service SmartBudgetService {
+  rpc GetBudgetSummary (BudgetSummaryRequest) returns (BudgetSummaryResponse);
+  rpc GetCategoryExpenses (CategoryExpensesRequest) returns (CategoryExpensesResponse);
+}
+
+message BudgetSummaryRequest {
+  string user_id = 1;
+}
+
+message BudgetSummaryResponse {
+  repeated CategorySummary categories = 1;
+}
+
+message CategorySummary {
+  string category = 1;
+  double total = 2;
+}
+
+message CategoryExpensesRequest {
+  string user_id = 1;
+  string category = 2;
+}
+
+message CategoryExpensesResponse {
+  string category = 1;
+  double total = 2;
+  repeated PaymentInfo payments = 3;
+}
+
+message PaymentInfo {
+  string payment_id = 1;
+  double amount = 2;
+  string service = 3;
+  string status = 4;
+  string created_at = 5;
+}
