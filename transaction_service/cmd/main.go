@@ -17,6 +17,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+
+	grpcclient "transaction_service/infrastructure/grpcclient"
 )
 
 func main() {
@@ -46,7 +48,19 @@ func main() {
 	}
 	publisher := mq.NewNatsPublisher(nc, "transactions")
 
-	uc := usecase.NewTransactionUsecase(txRepo, publisher)
+	// Подключение к UserService по gRPC
+	userServiceAddr := os.Getenv("USER_SERVICE_ADDR")
+	if userServiceAddr == "" {
+		userServiceAddr = ":50051" // default port
+	}
+	userConn, err := grpc.Dial(userServiceAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("❌ failed to connect to user service: %v", err)
+	}
+	defer userConn.Close()
+	userServiceClient := grpcclient.NewUserServiceClient(userConn)
+
+	uc := usecase.NewTransactionUsecase(txRepo, publisher, userServiceClient)
 
 	port := os.Getenv("PORT")
 	if port == "" {

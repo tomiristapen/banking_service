@@ -7,6 +7,7 @@ import (
 	"transaction_service/domain/model"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,8 +23,14 @@ func NewTransactionMongo(db *mongo.Database) *TransactionMongo {
 
 func (r *TransactionMongo) Create(tx *model.Transaction) error {
 	tx.CreatedAt = time.Now().Format(time.RFC3339)
-	_, err := r.collection.InsertOne(context.Background(), tx)
-	return err
+	res, err := r.collection.InsertOne(context.Background(), tx)
+	if err != nil {
+		return err
+	}
+	if oid, ok := res.InsertedID.(interface{ Hex() string }); ok {
+		tx.ID = oid.Hex()
+	}
+	return nil
 }
 
 func (r *TransactionMongo) GetHistory(userID string) ([]*model.Transaction, error) {
@@ -45,8 +52,12 @@ func (r *TransactionMongo) GetHistory(userID string) ([]*model.Transaction, erro
 }
 
 func (r *TransactionMongo) GetStatus(transferID string) (string, error) {
+	objID, err := primitive.ObjectIDFromHex(transferID)
+	if err != nil {
+		return "", err
+	}
 	var tx model.Transaction
-	err := r.collection.FindOne(context.Background(), bson.M{"_id": transferID}).Decode(&tx)
+	err = r.collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&tx)
 	if err != nil {
 		return "", err
 	}
