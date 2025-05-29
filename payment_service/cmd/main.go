@@ -3,15 +3,18 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 
 	handler "github.com/tomiristapen/banking_service/payment_service/adapter/grpc"
 	"github.com/tomiristapen/banking_service/payment_service/infrastructure/db"
 	"github.com/tomiristapen/banking_service/payment_service/infrastructure/grpcclient"
 	"github.com/tomiristapen/banking_service/payment_service/infrastructure/mq"
+	"github.com/tomiristapen/banking_service/payment_service/metrics"
 	pb "github.com/tomiristapen/banking_service/payment_service/proto"
 	"github.com/tomiristapen/banking_service/payment_service/usecase"
 )
@@ -47,6 +50,13 @@ func main() {
 	uc := usecase.NewPaymentUsecase(repo, userClient, mqPublisher)
 	h := handler.NewPaymentHandler(uc)
 
+	// Инициализация метрик Prometheus
+	metrics.Init()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":2112", nil)
+	}()
+
 	// gRPC server
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -65,3 +75,9 @@ func main() {
 		log.Fatalf("❌ failed to serve: %v", err)
 	}
 }
+
+// docker-compose logging config example:
+// logging:
+//   driver: loki
+//   options:
+//     loki-url: "http://localhost:3100/loki/api/v1/push"

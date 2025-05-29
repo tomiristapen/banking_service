@@ -4,16 +4,19 @@ import (
 	"context"
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	grpcadapter "transaction_service/adapter/grpc"
 	"transaction_service/infrastructure/db"
 	"transaction_service/infrastructure/mq"
+	"transaction_service/metrics"
 	transactionpb "transaction_service/proto"
 	"transaction_service/usecase"
 
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -59,7 +62,18 @@ func main() {
 	grpcServer := grpc.NewServer()
 	transactionpb.RegisterTransactionServiceServer(grpcServer, grpcadapter.NewTransactionHandler(uc))
 	log.Printf("TransactionService gRPC server started on :%s", port)
+	metrics.Init()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":2112", nil)
+	}()
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
 	}
 }
+
+// docker-compose logging config example:
+// logging:
+//   driver: loki
+//   options:
+//     loki-url: "http://localhost:3100/loki/api/v1/push"
