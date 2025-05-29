@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package smartbudget;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/tomiristapen/banking_service/smart_budget_service/proto;smartbudgetpb";
+
+service SmartBudgetService {
+  rpc GetBudgetSummary (BudgetSummaryRequest) returns (BudgetSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v1/smartbudget/summary/{user_id}"
+    };
+  }
+  rpc GetCategoryExpenses (CategoryExpensesRequest) returns (CategoryExpensesResponse) {
+    option (google.api.http) = {
+      get: "/v1/smartbudget/expenses/{user_id}/{category}"
+    };
+  }
+}
+
+message BudgetSummaryRequest {
+  string user_id = 1;
+}
+
+message BudgetSummaryResponse {
+  repeated CategorySummary categories = 1;
+}
+
+message CategorySummary {
+  string category = 1;
+  double total = 2;
+}
+
+message CategoryExpensesRequest {
+  string user_id = 1;
+  string category = 2;
+}
+
+message CategoryExpensesResponse {
+  string category = 1;
+  double total = 2;
+  repeated PaymentInfo payments = 3;
+}
+
+message PaymentInfo {
+  string payment_id = 1;
+  double amount = 2;
+  string service = 3;
+  string status = 4;
+  string created_at = 5;
+}

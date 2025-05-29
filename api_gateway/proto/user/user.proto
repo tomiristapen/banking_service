@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package user;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/tomiristapen/banking_service/user_service/proto;userpb";
+
+service UserService {
+  rpc RegisterUser(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/register"
+      body: "*"
+    };
+  }
+  rpc LoginUser(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/login"
+      body: "*"
+    };
+  }
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/verify"
+      body: "*"
+    };
+  }
+  rpc GetUserProfile(ProfileRequest) returns (ProfileResponse) {
+    option (google.api.http) = {
+      get: "/v1/user/profile"
+    };
+  }
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {
+    option (google.api.http) = {
+      get: "/v1/user/balance/{user_id}"
+    };
+  }
+  rpc DecreaseBalance(DecreaseBalanceRequest) returns (BalanceUpdateResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/balance/decrease"
+      body: "*"
+    };
+  }
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  string message = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  string message = 2;
+}
+
+message VerifyEmailRequest {
+  string user_id = 1;
+  string code = 2;
+}
+
+message VerifyEmailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ProfileRequest {
+    string token = 1;
+}
+
+message ProfileResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  bool is_verified = 4;
+  double balance = 5;
+}
+
+// ✅ Balance messages
+message GetBalanceRequest {
+  string user_id = 1;
+}
+
+message GetBalanceResponse {
+  double balance = 1;
+}
+
+message DecreaseBalanceRequest {
+  string user_id = 1;
+  double amount = 2;
+}
+
+message BalanceUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}

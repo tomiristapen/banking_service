@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package transaction;
+
+import "google/api/annotations.proto";
+
+option go_package = "transaction_service/proto;transaction";
+
+service TransactionService {
+  rpc CreateTransfer (CreateTransferRequest) returns (CreateTransferResponse) {
+    option (google.api.http) = {
+      post: "/v1/transaction/transfer"
+      body: "*"
+    };
+  }
+  rpc GetTransferHistory (GetTransferHistoryRequest) returns (GetTransferHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/transaction/history/{user_id}"
+    };
+  }
+  rpc GetTransferStatus (GetTransferStatusRequest) returns (GetTransferStatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/transaction/status/{transfer_id}"
+    };
+  }
+}
+
+message CreateTransferRequest {
+  string from_user_id = 1;
+  string to_user_id = 2;
+  double amount = 3;
+  string currency = 4;
+}
+
+message CreateTransferResponse {
+  string transfer_id = 1;
+  string status = 2;
+}
+
+message GetTransferHistoryRequest {
+  string user_id = 1;
+}
+
+message GetTransferHistoryResponse {
+  repeated Transaction transactions = 1;
+}
+
+message GetTransferStatusRequest {
+  string transfer_id = 1;
+}
+
+message GetTransferStatusResponse {
+  string status = 1;
+}
+
+message Transaction {
+  string id = 1;
+  string from_user_id = 2;
+  string to_user_id = 3;
+  double amount = 4;
+  string currency = 5;
+  string status = 6;
+  string created_at = 7;
+}

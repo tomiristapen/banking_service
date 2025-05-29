@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 
 	userpb "github.com/tomiristapen/banking_service/user_service/proto"
 	"github.com/tomiristapen/banking_service/user_service/usecase"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -23,7 +25,7 @@ type UserHandler struct {
 
 func NewUserHandler(uc *usecase.UserUseCase) *UserHandler {
 	return &UserHandler{
-		uc: uc,
+		uc:                             uc,
 		UnimplementedUserServiceServer: userpb.UnimplementedUserServiceServer{},
 	}
 }
@@ -83,7 +85,26 @@ func (h *UserHandler) VerifyEmail(ctx context.Context, req *userpb.VerifyEmailRe
 
 // Use token from request to get user profile
 func (h *UserHandler) GetUserProfile(ctx context.Context, req *userpb.ProfileRequest) (*userpb.ProfileResponse, error) {
-	userId, err := parseUserIdFromToken(req.Token)
+	// Универсальный способ: сначала из req.Token, потом из заголовка Authorization
+	tokenString := req.Token
+	if tokenString == "" {
+		// Пробуем из метаданных (gRPC/gateway)
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			authHeaders := md.Get("authorization")
+			if len(authHeaders) > 0 {
+				parts := strings.SplitN(authHeaders[0], " ", 2)
+				if len(parts) == 2 && parts[0] == "Bearer" {
+					tokenString = parts[1]
+				}
+			}
+		}
+	}
+	if tokenString == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "no token provided")
+	}
+
+	userId, err := parseUserIdFromToken(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
