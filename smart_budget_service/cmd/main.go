@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	grpcadapter "github.com/tomiristapen/banking_service/smart_budget_service/adapter/grpc"
+	"github.com/tomiristapen/banking_service/smart_budget_service/domain/model"
 	"github.com/tomiristapen/banking_service/smart_budget_service/infrastructure/db"
 	"github.com/tomiristapen/banking_service/smart_budget_service/infrastructure/mq"
 	smartbudgetpb "github.com/tomiristapen/banking_service/smart_budget_service/proto"
@@ -45,6 +46,25 @@ func main() {
 	}
 	subscriber := mq.NewMQSubscriber(natsURL, repo)
 	go subscriber.SubscribePayments()
+
+	// Подписка на события транзакций
+	txHandler := func(ctx context.Context, event *mq.TransactionEvent) {
+		exp := &model.CategoryExpense{
+			PaymentID: event.ID,
+			UserID:    event.FromUserID,
+			Category:  "transfer", // или определяйте по логике
+			Amount:    event.Amount,
+			Service:   "transaction_service",
+			Status:    event.Status,
+			CreatedAt: event.CreatedAt,
+		}
+		log.Printf("[SmartBudget][Transaction] AddExpense: %+v", exp)
+		if err := repo.AddExpense(ctx, exp); err != nil {
+			log.Printf("[SmartBudget][Transaction] Failed to add expense: %v", err)
+		}
+	}
+	txSubscriber := mq.NewTransactionSubscriber(natsURL, txHandler)
+	go txSubscriber.SubscribeTransactions()
 
 	// gRPC server
 	port := os.Getenv("PORT")
