@@ -59,3 +59,38 @@ func (s *MQSubscriber) SubscribePayments() {
 	})
 	log.Println("[SmartBudget] Subscribed to PaymentCompleted events")
 }
+
+type TransactionEvent struct {
+	ID         string  `json:"id"`
+	FromUserID string  `json:"from_user_id"`
+	ToUserID   string  `json:"to_user_id"`
+	Amount     float64 `json:"amount"`
+	Currency   string  `json:"currency"`
+	Status     string  `json:"status"`
+	CreatedAt  string  `json:"created_at"`
+}
+
+type TransactionSubscriber struct {
+	nc      *nats.Conn
+	Handler func(context.Context, *TransactionEvent)
+}
+
+func NewTransactionSubscriber(natsURL string, handler func(context.Context, *TransactionEvent)) *TransactionSubscriber {
+	nc, err := nats.Connect(natsURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to NATS: %v", err)
+	}
+	return &TransactionSubscriber{nc: nc, Handler: handler}
+}
+
+func (s *TransactionSubscriber) SubscribeTransactions() {
+	s.nc.Subscribe("transactions", func(m *nats.Msg) {
+		var event TransactionEvent
+		if err := json.Unmarshal(m.Data, &event); err != nil {
+			log.Printf("[SmartBudget] Failed to unmarshal transaction event: %v", err)
+			return
+		}
+		s.Handler(context.Background(), &event)
+	})
+	log.Println("[SmartBudget] Subscribed to transactions events")
+}
