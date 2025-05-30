@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	// Load .env file
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
@@ -48,7 +48,7 @@ func main() {
 	}
 	publisher := mq.NewNatsPublisher(nc, "transactions")
 
-	// Подключение к UserService по gRPC
+	
 	userServiceAddr := os.Getenv("USER_SERVICE_ADDR")
 	if userServiceAddr == "" {
 		userServiceAddr = ":50051" // default port
