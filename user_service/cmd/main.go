@@ -1,74 +1,86 @@
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "net"
-    "os"
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
 
-    "net/http"
-    "github.com/tomiristapen/banking_service/user_service/metrics"
-    "github.com/prometheus/client_golang/prometheus/promhttp"
-    "github.com/joho/godotenv"
-    mongodriver "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-    "google.golang.org/grpc"
-    "google.golang.org/grpc/reflection"
+	"net/http"
 
-    userpb "github.com/tomiristapen/banking_service/user_service/proto"
-    infraMongo "github.com/tomiristapen/banking_service/user_service/infrastructure/mongo"
-    "github.com/tomiristapen/banking_service/user_service/infrastructure/smtp"
-    "github.com/tomiristapen/banking_service/user_service/usecase"
-    handler "github.com/tomiristapen/banking_service/user_service/adapter/grpc"
+	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/tomiristapen/banking_service/user_service/metrics"
+	mongodriver "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+
+	handler "github.com/tomiristapen/banking_service/user_service/adapter/grpc"
+	infraMongo "github.com/tomiristapen/banking_service/user_service/infrastructure/mongo"
+	"github.com/tomiristapen/banking_service/user_service/infrastructure/smtp"
+	userpb "github.com/tomiristapen/banking_service/user_service/proto"
+	"github.com/tomiristapen/banking_service/user_service/usecase"
 )
 
 func main() {
-    metrics.Init()
+	// Ensure logs directory exists and set log output to file
+	if err := os.MkdirAll("/app/logs", 0755); err != nil {
+		log.Fatalf("Failed to create log directory: %v", err)
+	}
+	logFile, err := os.OpenFile("/app/logs/user_service.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	log.SetOutput(logFile)
+	defer logFile.Close()
 
-    go func() {
-        http.Handle("/metrics", promhttp.Handler())
-        http.ListenAndServe(":2112", nil)
-    }()
+	metrics.Init()
 
-    if err := godotenv.Load(); err != nil {
-        log.Println("No .env file found, using defaults")
-    }
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":2112", nil)
+	}()
 
-    mongoURI := os.Getenv("MONGO_URI")
-    if mongoURI == "" {
-        mongoURI = "mongodb://localhost:27017"
-    }
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using defaults")
+	}
 
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "50051"
-    }
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
 
-    client, err := mongodriver.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
-    if err != nil {
-        log.Fatal("MongoDB connection error:", err)
-    }
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "50051"
+	}
 
-    db := client.Database("user_service")
+	client, err := mongodriver.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
+	if err != nil {
+		log.Fatal("MongoDB connection error:", err)
+	}
 
-    userRepo := infraMongo.NewUserRepository(db)
-    mail := smtp.NewMailer()
-    userUC := usecase.NewUserUseCase(userRepo, mail)
-    userHandler := handler.NewUserHandler(userUC)
+	db := client.Database("user_service")
 
-    lis, err := net.Listen("tcp", ":"+port)
-    if err != nil {
-        log.Fatalf("Failed to listen on port %s: %v", port, err)
-    }
+	userRepo := infraMongo.NewUserRepository(db)
+	mail := smtp.NewMailer()
+	userUC := usecase.NewUserUseCase(userRepo, mail)
+	userHandler := handler.NewUserHandler(userUC)
 
-    grpcServer := grpc.NewServer()
-    userpb.RegisterUserServiceServer(grpcServer, userHandler)
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatalf("Failed to listen on port %s: %v", port, err)
+	}
 
-    reflection.Register(grpcServer)
+	grpcServer := grpc.NewServer()
+	userpb.RegisterUserServiceServer(grpcServer, userHandler)
 
-    fmt.Printf("✅ UserService is running on port %s...\n", port)
-    if err := grpcServer.Serve(lis); err != nil {
-        log.Fatalf("Failed to serve: %v", err)
-    }
+	reflection.Register(grpcServer)
+
+	fmt.Printf("✅ UserService is running on port %s...\n", port)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
 }

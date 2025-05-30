@@ -20,6 +20,17 @@ import (
 )
 
 func main() {
+	// Ensure logs directory exists and set log output to file
+	if err := os.MkdirAll("/app/logs", 0755); err != nil {
+		log.Fatalf("Failed to create log directory: %v", err)
+	}
+	logFile, err := os.OpenFile("/app/logs/smart_budget_service.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	log.SetOutput(logFile)
+	defer logFile.Close()
+
 	_ = godotenv.Load()
 
 	mongoURI := os.Getenv("MONGO_URI")

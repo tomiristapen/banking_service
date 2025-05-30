@@ -1,0 +1,103 @@
+version: '3.7'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+    networks:
+      - monitoring
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: promtail
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml
+      - ./logs:/app/logs
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: jaeger
+    ports:
+      - "16686:16686" # UI
+      - "6831:6831/udp" # agent
+      - "14268:14268" # collector HTTP
+    networks:
+      - monitoring
+
+  payment_service:
+    image: your_payment_service_image
+    container_name: payment_service
+    ports:
+      - "8000:8000"
+    networks:
+      - monitoring
+    volumes:
+      - ./logs/payment_service:/app/logs
+
+  user_service:
+    image: your_user_service_image
+    container_name: user_service
+    ports:
+      - "8001:8001"
+    networks:
+      - monitoring
+    volumes:
+      - ./logs/user_service:/app/logs
+
+  transaction_service:
+    image: your_transaction_service_image
+    container_name: transaction_service
+    ports:
+      - "8002:8002"
+    networks:
+      - monitoring
+    volumes:
+      - ./logs/transaction_service:/app/logs
+
+  smart_budget_service:
+    image: your_smart_budget_service_image
+    container_name: smart_budget_service
+    ports:
+      - "8003:8003"
+    networks:
+      - monitoring
+    volumes:
+      - ./logs/smart_budget_service:/app/logs
+
+networks:
+  monitoring:
+    driver: bridge
