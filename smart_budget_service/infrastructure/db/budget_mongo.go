@@ -18,8 +18,7 @@ func NewBudgetMongoRepo(col *mongo.Collection) repository.BudgetRepository {
 	return &BudgetMongoRepo{col: col}
 }
 
-// mongoCategoryExpense используется только для хранения в MongoDB
-// и не "засоряет" domain/model тегами
+
 type mongoCategoryExpense struct {
 	PaymentID string  `bson:"payment_id"`
 	UserID    string  `bson:"user_id"`
