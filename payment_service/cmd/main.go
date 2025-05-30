@@ -23,13 +23,11 @@ func init() {
 }
 
 func main() {
-	// Подключение к MongoDB
 	paymentCol, serviceCol := db.ConnectMongo()
 
-	// Подключение к UserService по gRPC
 	userServiceAddr := os.Getenv("USER_SERVICE_ADDR")
 	if userServiceAddr == "" {
-		userServiceAddr = ":50051" // default port
+		userServiceAddr = ":50051" 
 	}
 	userConn, err := grpc.Dial(userServiceAddr, grpc.WithInsecure())
 	if err != nil {
@@ -38,16 +36,14 @@ func main() {
 	defer userConn.Close()
 	userClient := grpcclient.NewUserServiceClient(userConn)
 
-	// Подключение к NATS
 	mqPublisher := mq.NewMQPublisher()
 	defer mqPublisher.Close()
 
-	// Clean Architecture: repo → usecase → handler
+	// repo → usecase → handler
 	repo := db.NewPaymentMongoRepo(paymentCol, serviceCol)
 	uc := usecase.NewPaymentUsecase(repo, userClient, mqPublisher)
 	h := handler.NewPaymentHandler(uc)
 
-	// gRPC server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "50052"

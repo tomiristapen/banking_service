@@ -30,7 +30,7 @@ func (r *mongoUserRepository) CreateUser(ctx context.Context, user *model.User) 
 		"password":    user.Password,
 		"is_verified": user.IsVerified,
 		"created_at":  user.CreatedAt,
-		"balance":     user.Balance, // ✅ balance қосылды
+		"balance":     user.Balance, 
 	}
 
 	_, err := r.collection.InsertOne(ctx, doc)
@@ -76,7 +76,7 @@ func (r *mongoUserRepository) UpdateUser(ctx context.Context, user *model.User) 
 			"email":       user.Email,
 			"password":    user.Password,
 			"is_verified": user.IsVerified,
-			"balance":     user.Balance, // ✅ balance жаңарту
+			"balance":     user.Balance, 
 		},
 	}
 	_, err := r.collection.UpdateOne(ctx, filter, update)
@@ -91,6 +91,6 @@ func mapToUser(data bson.M) *model.User {
 		Password:   data["password"].(string),
 		IsVerified: data["is_verified"].(bool),
 		CreatedAt:  data["created_at"].(primitive.DateTime).Time(),
-		Balance:    data["balance"].(float64), // ✅ balance оқу
+		Balance:    data["balance"].(float64), 
 	}
 }

@@ -3,7 +3,7 @@ package utils
 import "errors"
 
 func HashPassword(password string) (string, error) {
-    return password, nil // временно, потом добавим хеширование
+    return password, nil 
 }
 
 func CheckPassword(input, hashed string) error {

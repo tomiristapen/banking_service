@@ -22,7 +22,7 @@ type UserUseCase struct {
 	mu       sync.Mutex
 
 	// TTL-кеш для профилей и баланса
-	profileCache *cache.Cache // userID -> *model.User
+	profileCache *cache.Cache 
 }
 
 func NewUserUseCase(userRepo repository.UserRepository, mailer smtp.Mailer) *UserUseCase {
@@ -52,7 +52,7 @@ func (u *UserUseCase) Register(ctx context.Context, name, email, password string
 		Password:   hashed,
 		CreatedAt:  time.Now(),
 		IsVerified: false,
-		Balance:    10000, // ✅ стартовый баланс
+		Balance:    10000, //стартовый баланс
 	}
 
 	savedUser, err := u.userRepo.CreateUser(ctx, user)
@@ -70,7 +70,7 @@ func (u *UserUseCase) Register(ctx context.Context, name, email, password string
 	log.WithFields(log.Fields{
 		"user_id":           savedUser.ID,
 		"email":             savedUser.Email,
-		"verification_code": code, // <-- логируем verification_code
+		"verification_code": code, 
 	}).Info("User registered")
 
 	_ = u.mailer.SendVerificationEmail(savedUser.Email, code)
@@ -156,7 +156,6 @@ func (u *UserUseCase) GetProfile(ctx context.Context, userID string) (*model.Use
 	return user, nil
 }
 
-// ✅ Balance functional methods
 
 func (u *UserUseCase) GetBalance(ctx context.Context, userID string) (float64, error) {
 	if cached, found := u.profileCache.Get(userID); found {

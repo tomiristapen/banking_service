@@ -9,7 +9,7 @@ import (
     "github.com/tomiristapen/banking_service/user_service/utils"
 )
 
-// --- Фейковый репозиторий ---
+// Фейковый репо
 type fakeRepo struct {
     users map[string]*model.User
 }
@@ -58,7 +58,7 @@ func (f *fakeRepo) UpdateVerificationStatus(ctx context.Context, id string, stat
     return errors.New("not found")
 }
 
-// --- Фейковый мейлер ---
+// фейковый мейлер
 type fakeMailer struct {
     SentTo string
     Code   string
@@ -70,7 +70,7 @@ func (f *fakeMailer) SendVerificationEmail(email, code string) error {
     return nil
 }
 
-// --- Тест регистрации ---
+// тест регистрации
 func TestRegisterUser(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}
@@ -98,7 +98,7 @@ func TestRegisterUser(t *testing.T) {
     }
 }
 
-// --- Тест логина ---
+// тест логина 
 func TestLoginUser(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}
@@ -120,7 +120,7 @@ func TestLoginUser(t *testing.T) {
     }
 }
 
-// --- Тест VerifyEmail ---
+// Тест VerifyEmail
 func TestVerifyEmail(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}
@@ -143,7 +143,7 @@ func TestVerifyEmail(t *testing.T) {
     }
 }
 
-// --- Тест GetUserProfile ---
+// тест GetUserProfile
 func TestGetUserProfile(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}
@@ -167,7 +167,7 @@ func TestGetUserProfile(t *testing.T) {
     }
 }
 
-// --- Тест повторной регистрации ---
+// тест повторной регистрации
 func TestRegisterConflict(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}
@@ -183,7 +183,7 @@ func TestRegisterConflict(t *testing.T) {
     }
 }
 
-// --- Тест логина не верифицированного ---
+// тест логина не верифицированного 
 func TestLoginUnverifiedUser(t *testing.T) {
     repo := &fakeRepo{users: make(map[string]*model.User)}
     mailer := &fakeMailer{}

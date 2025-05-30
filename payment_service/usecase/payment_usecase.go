@@ -28,7 +28,6 @@ func (uc *PaymentUsecase) PayForService(ctx context.Context, userID, service str
 		return nil, errors.New("invalid input")
 	}
 
-	// Проверка баланса через UserService
 	balance, err := uc.userClient.GetBalance(ctx, userID)
 	if err != nil {
 		return nil, errors.New("failed to check balance: " + err.Error())
@@ -37,7 +36,6 @@ func (uc *PaymentUsecase) PayForService(ctx context.Context, userID, service str
 		return nil, errors.New("insufficient funds")
 	}
 
-	// Списание баланса
 	success, msg, err := uc.userClient.DecreaseBalance(ctx, userID, amount)
 	if err != nil {
 		return nil, errors.New("failed to decrease balance: " + err.Error())
@@ -61,7 +59,6 @@ func (uc *PaymentUsecase) PayForService(ctx context.Context, userID, service str
 		return nil, err
 	}
 
-	// Публикация события в очередь
 	if uc.mq != nil {
 		event := &mq.PaymentEvent{
 			PaymentID: payment.ID,

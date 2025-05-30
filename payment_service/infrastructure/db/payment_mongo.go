@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// PaymentMongoRepo implements the PaymentRepository interface
+
 type PaymentMongoRepo struct {
 	paymentCol     *mongo.Collection
 	serviceListCol *mongo.Collection
@@ -23,7 +23,7 @@ func NewPaymentMongoRepo(paymentCol, serviceListCol *mongo.Collection) *PaymentM
 	}
 }
 
-// internal Mongo document struct
+
 type paymentDoc struct {
 	ID        string    `bson:"_id"`
 	UserID    string    `bson:"user_id"`
@@ -35,7 +35,6 @@ type paymentDoc struct {
 	CreatedAt time.Time `bson:"created_at"`
 }
 
-// helpers for mapping between domain and db
 
 func toDoc(p *model.Payment) *paymentDoc {
 	return &paymentDoc{
@@ -63,14 +62,14 @@ func fromDoc(d *paymentDoc) *model.Payment {
 	}
 }
 
-// Pay inserts a payment record into Mongo
+
 func (r *PaymentMongoRepo) Pay(ctx context.Context, p *model.Payment) error {
 	doc := toDoc(p)
 	_, err := r.paymentCol.InsertOne(ctx, doc)
 	return err
 }
 
-// GetStatus finds a payment by ID
+
 func (r *PaymentMongoRepo) GetStatus(ctx context.Context, id string) (*model.Payment, error) {
 	var doc paymentDoc
 	err := r.paymentCol.FindOne(ctx, bson.M{"_id": id}).Decode(&doc)
@@ -80,7 +79,7 @@ func (r *PaymentMongoRepo) GetStatus(ctx context.Context, id string) (*model.Pay
 	return fromDoc(&doc), nil
 }
 
-// ListAvailableServices returns all service names from the "services" collection
+
 func (r *PaymentMongoRepo) ListAvailableServices(ctx context.Context) ([]string, error) {
 	cursor, err := r.serviceListCol.Find(ctx, bson.M{})
 	if err != nil {

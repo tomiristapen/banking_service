@@ -15,7 +15,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// Load JWT secret from environment variable
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type UserHandler struct {
@@ -30,10 +29,8 @@ func NewUserHandler(uc *usecase.UserUseCase) *UserHandler {
 	}
 }
 
-// Parse userId from JWT token
 func parseUserIdFromToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Check signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
@@ -83,12 +80,10 @@ func (h *UserHandler) VerifyEmail(ctx context.Context, req *userpb.VerifyEmailRe
 	return &userpb.VerifyEmailResponse{Success: success, Message: "email verified"}, nil
 }
 
-// Use token from request to get user profile
 func (h *UserHandler) GetUserProfile(ctx context.Context, req *userpb.ProfileRequest) (*userpb.ProfileResponse, error) {
-	// Универсальный способ: сначала из req.Token, потом из заголовка Authorization
+	// Универсальный способ: сначала из req.Token, потом из заголовка Authorization для грпс и рест в постмане чтобы проверять 
 	tokenString := req.Token
 	if tokenString == "" {
-		// Пробуем из метаданных (gRPC/gateway)
 		md, ok := metadata.FromIncomingContext(ctx)
 		if ok {
 			authHeaders := md.Get("authorization")
