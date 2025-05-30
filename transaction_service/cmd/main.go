@@ -51,7 +51,7 @@ func main() {
 	
 	userServiceAddr := os.Getenv("USER_SERVICE_ADDR")
 	if userServiceAddr == "" {
-		userServiceAddr = ":50051" // default port
+		userServiceAddr = ":50051" 
 	}
 	userConn, err := grpc.Dial(userServiceAddr, grpc.WithInsecure())
 	if err != nil {
