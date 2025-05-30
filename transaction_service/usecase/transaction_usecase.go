@@ -23,7 +23,7 @@ func NewTransactionUsecase(repo repository.TransactionRepository, publisher Nats
 
 func (u *TransactionUsecase) CreateTransfer(tx *model.Transaction) error {
 	ctx := context.Background()
-	// 1. Проверить баланс отправителя
+	
 	balance, err := u.userClient.GetBalance(ctx, tx.FromUserID)
 	if err != nil {
 		tx.Status = "failed"
@@ -35,20 +35,20 @@ func (u *TransactionUsecase) CreateTransfer(tx *model.Transaction) error {
 		u.repo.Create(tx)
 		return nil
 	}
-	// 2. Списать у отправителя
+	
 	success, _, err := u.userClient.DecreaseBalance(ctx, tx.FromUserID, tx.Amount)
 	if err != nil || !success {
 		tx.Status = "failed"
 		u.repo.Create(tx)
 		return err
 	}
-	// 3. Зачислить получателю (если есть метод IncreaseBalance)
+	
 	if success, _, err := u.userClient.DecreaseBalance(ctx, tx.ToUserID, -tx.Amount); err != nil || !success {
 		tx.Status = "failed"
 		u.repo.Create(tx)
 		return err
 	}
-	// 4. Если всё успешно
+	
 	tx.Status = "success"
 	err = u.repo.Create(tx)
 	if err != nil {
