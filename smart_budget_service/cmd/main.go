@@ -39,7 +39,7 @@ func main() {
 	repo := db.NewBudgetMongoRepo(col)
 	uc := usecase.NewBudgetUsecase(repo)
 
-	// NATS subscriber
+	
 	natsURL := os.Getenv("NATS_URL")
 	if natsURL == "" {
 		natsURL = "nats://localhost:4222"
@@ -47,12 +47,12 @@ func main() {
 	subscriber := mq.NewMQSubscriber(natsURL, repo)
 	go subscriber.SubscribePayments()
 
-	// Подписка на события транзакций
+	
 	txHandler := func(ctx context.Context, event *mq.TransactionEvent) {
 		exp := &model.CategoryExpense{
 			PaymentID: event.ID,
 			UserID:    event.FromUserID,
-			Category:  "transfer", // или определяйте по логике
+			Category:  "transfer", 
 			Amount:    event.Amount,
 			Service:   "transaction_service",
 			Status:    event.Status,
@@ -66,7 +66,7 @@ func main() {
 	txSubscriber := mq.NewTransactionSubscriber(natsURL, txHandler)
 	go txSubscriber.SubscribeTransactions()
 
-	// gRPC server
+	
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "50053"
